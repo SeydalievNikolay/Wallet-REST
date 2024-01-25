@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: dev
+      changes:
+        - createTable:
+            tableName: wallet
+            columns:
+              - column:
+                  name: wallet_id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: operation_type
+                  type: varchar(8)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: DECIMAL
+              - column:
+                  name: uuid
+                  type: varchar(256)
+                  constraints:
+                    unique: true
