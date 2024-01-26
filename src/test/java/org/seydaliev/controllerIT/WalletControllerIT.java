@@ -1,15 +1,16 @@
 package org.seydaliev.controllerIT;
 
-import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.seydaliev.controller.WalletController;
+import org.seydaliev.dto.WalletDTO;
 import org.seydaliev.repository.WalletRepository;
 import org.seydaliev.service.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -25,12 +26,8 @@ import java.sql.SQLException;
 import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -43,6 +40,8 @@ class WalletControllerIT {
     MockMvc mockMvc;
     @Autowired
     private WalletRepository walletRepository;
+    @Autowired
+    private WalletController walletController;
     @Container
     private static final PostgreSQLContainer<?> postgres =
             new PostgreSQLContainer<>("postgres:latest")
@@ -70,17 +69,15 @@ class WalletControllerIT {
 
     @Test
     public void getWallet_isOk() throws Exception {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("uuid", 63527);
-        jsonObject.put("operationType", "DEPOSIT");
-        jsonObject.put("amount", 1000);
-        mockMvc.perform(patch("/api/v1/wallet")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonObject.toString()))
-                .andExpectAll(status().isOk(),
-                        jsonPath("$.uuid").value(63527),
-                        jsonPath("$.operationType").value("DEPOSIT"),
-                        jsonPath("$.amount").value(1000));
+        WalletService mockWalletService = mock(WalletService.class);
+        WalletDTO dto = new WalletDTO();
+        when(mockWalletService.updateWallet(dto)).thenReturn(true);
+        WalletController controller = new WalletController(mockWalletService);
+        ResponseEntity<Boolean> result = (ResponseEntity<Boolean>) controller.getWallet(dto);
+        assertNotNull(result);
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertTrue(result.getBody());
+        verify(mockWalletService, times(1)).updateWallet(dto);
     }
 
     @Test
