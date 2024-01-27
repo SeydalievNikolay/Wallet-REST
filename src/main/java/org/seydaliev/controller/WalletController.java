@@ -20,7 +20,7 @@ public class WalletController {
 
     @PatchMapping
     public ResponseEntity<Boolean> getWallet(@RequestBody @Valid WalletDTO walletDTO) {
-        if (walletDTO == null) {
+        /*if (walletDTO == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         boolean result = false;
@@ -29,6 +29,8 @@ public class WalletController {
         } catch (Exception e) {
             throw new WalletValidatedException(e.getMessage());
         }
+        return ResponseEntity.ok(result);*/
+        boolean result = walletService.updateWallet(walletDTO);
         return ResponseEntity.ok(result);
     }
 

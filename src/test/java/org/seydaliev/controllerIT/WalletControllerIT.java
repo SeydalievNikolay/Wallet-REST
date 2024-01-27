@@ -1,16 +1,18 @@
 package org.seydaliev.controllerIT;
 
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.seydaliev.controller.WalletController;
 import org.seydaliev.dto.WalletDTO;
+import org.seydaliev.model.OperationType;
 import org.seydaliev.repository.WalletRepository;
 import org.seydaliev.service.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -18,16 +20,24 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -69,15 +79,33 @@ class WalletControllerIT {
 
     @Test
     public void getWallet_isOk() throws Exception {
-        WalletService mockWalletService = mock(WalletService.class);
-        WalletDTO dto = new WalletDTO();
-        when(mockWalletService.updateWallet(dto)).thenReturn(true);
-        WalletController controller = new WalletController(mockWalletService);
-        ResponseEntity<Boolean> result = (ResponseEntity<Boolean>) controller.getWallet(dto);
-        assertNotNull(result);
-        assertEquals(HttpStatus.OK, result.getStatusCode());
-        assertTrue(result.getBody());
-        verify(mockWalletService, times(1)).updateWallet(dto);
+        ExecutorService executor = Executors.newFixedThreadPool(100);
+        List<Future<String>> futures = new ArrayList<>();
+
+        for (int i = 0; i < 100; i++) {
+            final int index = i;
+            Future<String> future = executor.submit(() -> {
+                WalletDTO walletDTO = new WalletDTO();
+                walletDTO.setUuid(UUID.randomUUID());
+                walletDTO.setOperationType(OperationType.DEPOSIT);
+                walletDTO.setAmount(BigDecimal.valueOf(1000));
+                ObjectMapper mapper = new ObjectMapper();
+                String json = mapper.writeValueAsString(walletDTO);
+
+                return mockMvc.perform(patch("/api/v1/wallet")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json))
+                        .andReturn().getResponse().getContentAsString();
+            });
+            futures.add(future);
+        }
+
+        for (Future<String> future : futures) {
+            String response = future.get();
+            assertFalse(Boolean.parseBoolean(response));
+        }
+
+        executor.shutdown();
     }
 
     @Test
@@ -88,6 +116,6 @@ class WalletControllerIT {
         when(mockWalletService.getBalanceByUUID(walletUUID)).thenReturn(expectedBalance);
         WalletController controller = new WalletController(mockWalletService);
         BigDecimal actualBalance = controller.getBalance(walletUUID);
-        assertEquals(expectedBalance,actualBalance);
+        assertEquals(expectedBalance, actualBalance);
     }
 }

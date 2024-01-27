@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.seydaliev.dto.WalletDTO;
 import org.seydaliev.exception.NotFoundException;
 import org.seydaliev.exception.WalletPaymentException;
+import org.seydaliev.exception.WalletValidatedException;
 import org.seydaliev.model.OperationType;
 import org.seydaliev.model.Wallet;
 import org.seydaliev.repository.WalletRepository;
@@ -27,14 +28,15 @@ public class WalletServiceImpl implements WalletService {
                     .orElseThrow(() -> new NotFoundException
                             (String.format("Wallet is not exist" + uuid)));
             if (isValidOperationWallet(walletDTO.getOperationType())) {
-                int temp = wallet.getAmount().compareTo(walletDTO.getAmount());
-                if (temp <= 0) {
-                    throw new WalletPaymentException(String.format("Insufficient funds"));
-                }
-                wallet.setAmount(walletDTO.getAmount());
-                walletRepository.save(wallet);
-                return true;
+                throw new WalletValidatedException("Invalid operation type");
             }
+            BigDecimal amount = walletDTO.getAmount();
+            if (wallet.getAmount().compareTo(amount) < 0) {
+                throw new WalletPaymentException(String.format("Insufficient funds"));
+            }
+            wallet.setAmount(walletDTO.getAmount());
+            walletRepository.save(wallet);
+            return true;
         }
         return false;
     }
