@@ -20,9 +20,9 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: amount
-                  type: DECIMAL
+                  type: NUMERIC
               - column:
                   name: uuid
-                  type: varchar(256)
+                  type: varchar(255)
                   constraints:
                     unique: true

@@ -88,7 +88,7 @@ class WalletControllerIT {
                 WalletDTO walletDTO = new WalletDTO();
                 walletDTO.setUuid(UUID.randomUUID());
                 walletDTO.setOperationType(OperationType.DEPOSIT);
-                walletDTO.setAmount(BigDecimal.valueOf(1000));
+                walletDTO.setAmount(BigDecimal.valueOf(10));
                 ObjectMapper mapper = new ObjectMapper();
                 String json = mapper.writeValueAsString(walletDTO);
 

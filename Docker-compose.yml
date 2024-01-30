@@ -3,17 +3,17 @@ services:
   socks-app:
     image: 'wallet:latest'
     ports:
-      - ":80"
+      - "8080:8080"
     build:
       context: .
+      dockerfile: Dockerfile
     container_name: wallet-app
     depends_on:
       - postgres
     environment:
-      - 'SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/wallet'
-      - 'SPRING_DATASOURCE_USERNAME=postgres'
-      - 'SPRING_DATASOURCE_PASSWORD=postgres'
-      - 'SPRING_JPA_HIBERNATE_DDL_AUTO=validate'
+      POSTGRES_USER: local
+      POSTGRES_PASSWORD: local
+      POSTGRES_DB: my_wallet
 
   postgres:
     image: 'postgres:latest'
@@ -23,4 +23,4 @@ services:
     environment:
       - 'POSTGRES_USER=postgres'
       - 'POSTGRES_PASSWORD=postgres'
-      - 'POSTGRES_HOST_AUTH_METHOD=trust"'
+      - 'POSTGRES_HOST_AUTH_METHOD=trust'
