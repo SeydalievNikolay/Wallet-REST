@@ -1,7 +1,6 @@
 package org.seydaliev.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.logging.log4j.Logger;
 import org.seydaliev.dto.WalletDTO;
 import org.seydaliev.exception.NotFoundException;
 import org.seydaliev.exception.WalletPaymentException;
@@ -14,14 +13,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class WalletServiceImpl implements WalletService {
-
     private final WalletRepository walletRepository;
-    private  Logger logger;
 
     @Override
     @Transactional
@@ -32,12 +30,12 @@ public class WalletServiceImpl implements WalletService {
                 Wallet wallet = walletRepository.findByUuid(uuid)
                         .orElseThrow(() -> new NotFoundException
                                 (String.format("Wallet is not exist" + uuid)));
-                if (isValidOperationWallet(walletDTO.getOperationType())) {
+                if (!isValidOperationWallet(walletDTO.getOperationType())) {
                     throw new WalletValidatedException("Invalid operation type");
                 }
                 BigDecimal amount = walletDTO.getAmount();
                 if (wallet.getAmount().compareTo(amount) < 0) {
-                    throw new WalletPaymentException(String.format("Insufficient funds"));
+                    throw new WalletPaymentException("Insufficient funds");
                 }
                 wallet.setAmount(walletDTO.getAmount());
                 walletRepository.save(wallet);
@@ -45,7 +43,7 @@ public class WalletServiceImpl implements WalletService {
             }
             return false;
         } catch (NotFoundException | WalletValidatedException | WalletPaymentException e) {
-            logger.error("Error updating wallet", e);
+            System.err.println("Error updating wallet: " + e.getMessage());
             return false;
         }
     }
@@ -63,13 +61,15 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     public BigDecimal getBalanceByUUID(UUID uuid) {
-        Wallet wallet = null;
-        if (uuid != null) {
-            String uid = uuid.toString();
-            wallet = walletRepository.findByUuid(uid)
-                    .orElseThrow(() -> new NotFoundException
-                            (String.format("Wallet is not exist" + uuid)));
+
+        if (uuid == null) {
+            return null;
         }
-        return wallet.getAmount();
+        String uid = uuid.toString();
+        Optional<Wallet> optionalWallet = walletRepository.findByUuid(uid);
+        if (optionalWallet.isEmpty()) {
+            throw new NotFoundException(String.format("Wallet is not exist" + uuid));
+        }
+        return optionalWallet.get().getAmount();
     }
 }
