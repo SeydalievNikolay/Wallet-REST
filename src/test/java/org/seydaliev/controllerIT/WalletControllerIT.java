@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
-import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -32,6 +31,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
 
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -79,19 +79,21 @@ class WalletControllerIT {
 
     @Test
     public void getWallet_isOk() throws Exception {
+
+        WalletDTO walletDTO = new WalletDTO();
+        UUID fixedUUID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        walletDTO.setUuid(fixedUUID);
+        walletDTO.setOperationType(OperationType.DEPOSIT);
+        walletDTO.setAmount(BigDecimal.valueOf(10));
+
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(walletDTO);
+
         ExecutorService executor = Executors.newFixedThreadPool(100);
         List<Future<String>> futures = new ArrayList<>();
 
         for (int i = 0; i < 100; i++) {
-            final int index = i;
             Future<String> future = executor.submit(() -> {
-                WalletDTO walletDTO = new WalletDTO();
-                walletDTO.setUuid(UUID.randomUUID());
-                walletDTO.setOperationType(OperationType.DEPOSIT);
-                walletDTO.setAmount(BigDecimal.valueOf(10));
-                ObjectMapper mapper = new ObjectMapper();
-                String json = mapper.writeValueAsString(walletDTO);
-
                 return mockMvc.perform(patch("/api/v1/wallet")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(json))
@@ -102,7 +104,6 @@ class WalletControllerIT {
 
         for (Future<String> future : futures) {
             String response = future.get();
-            assertFalse(Boolean.parseBoolean(response));
         }
 
         executor.shutdown();

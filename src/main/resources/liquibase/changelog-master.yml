@@ -1,5 +1,3 @@
 databaseChangeLog:
   - include:
       file: liquibase/init/create-wallet.yml
-  - include:
-      file: liquibase/init/addColumn-version.yml

@@ -11,6 +11,7 @@ import org.seydaliev.repository.WalletRepository;
 import org.seydaliev.service.WalletService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -23,7 +24,7 @@ public class WalletServiceImpl implements WalletService {
     private final WalletRepository walletRepository;
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW,timeout = 2, isolation = Isolation.REPEATABLE_READ)
     public boolean updateWallet(WalletDTO walletDTO) {
         try {
             if (walletDTO.getUuid() != null) {
@@ -50,14 +51,13 @@ public class WalletServiceImpl implements WalletService {
     }
 
     private boolean isValidOperationWallet(OperationType operationType) {
-
-        if (operationType.name().equals("WITHDRAW")) {
-            return true;
+        switch (operationType) {
+            case WITHDRAW:
+            case DEPOSIT:
+                return true;
+            default:
+                return false;
         }
-        if (operationType.name().equals("DEPOSIT")) {
-            return true;
-        }
-        return false;
     }
 
     @Override

@@ -17,6 +17,4 @@ public class Wallet {
     private BigDecimal amount;
     @Column(unique = true)
     private String uuid;
-    @Version
-    private int version;
 }
