@@ -10,6 +10,7 @@ import org.seydaliev.model.Wallet;
 import org.seydaliev.repository.WalletRepository;
 import org.seydaliev.service.WalletService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
