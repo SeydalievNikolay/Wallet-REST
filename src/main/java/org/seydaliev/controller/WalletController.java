@@ -6,6 +6,7 @@ import org.seydaliev.exception.WalletValidatedException;
 import org.seydaliev.service.WalletService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -20,15 +21,7 @@ public class WalletController {
 
     @PatchMapping
     public ResponseEntity<Boolean> getWallet(@RequestBody @Valid WalletDTO walletDTO) {
-        if (walletDTO == null) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-        boolean result = false;
-        try {
-            result = walletService.updateWallet(walletDTO);
-        } catch (Exception e) {
-            throw new WalletValidatedException(e.getMessage());
-        }
+        boolean result = walletService.updateWallet(walletDTO);
         return ResponseEntity.ok(result);
     }
 
